@@ -1,7 +1,7 @@
 const User = require('../models/user')
 const Post = require('../models/post')
 const Comment = require('../models/comments')
-
+const Like = require('../models/like')
 
 module.exports.createPost = async (req, res) => {
     try {
@@ -78,7 +78,7 @@ module.exports.deletePost = async (req, res) => {
       // Delete all comments associated with the post
       await Comment.deleteMany({ post: postId });
       await Like.deleteMany({post: postId})
-  
+      
       const delpost = await Post.findById(postId);
   
       if (!delpost) {
