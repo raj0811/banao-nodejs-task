@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const User = require('../models/user');
 const resetMailer = require('../mailer/resetpasswordmailer');
-
+const JWT_SECRET='mykey'
 
 module.exports.home = (req, res) => {
     return res.send({
@@ -43,7 +43,7 @@ module.exports.signup = async (req, res) => {
         const user = new User({ email, username, password, name });
         await user.save();
 
-        const token = jwt.sign({ userId: user._id }, 'your_secret_key');
+        const token = jwt.sign({ userId: user._id }, JWT_SECRET);
         res.json({ token, user });
 
     } catch (error) {
@@ -76,8 +76,10 @@ module.exports.login = async (req, res) => {
         }
 
         // Generate a JWT token
-        const token = jwt.sign({ userId: user._id }, 'your_secret_key');
+        const token = jwt.sign({ userId: user._id }, JWT_SECRET);
 
+        // save in cookies
+        res.cookie('token', token, { httpOnly: true });
         // Send the token and user data in the response
         res.json({
             msg: "Successfully Logged In",
@@ -176,10 +178,7 @@ module.exports.chnagePassword = async (req,res) => {
             msg: 'Password changed successfully'
         });
 
-
-
-
-    } catch (err) {
+} catch (err) {
         res.send(err)
     }
 }
