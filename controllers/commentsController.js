@@ -1,12 +1,15 @@
 const Comment = require('../models/comments');
 const Like = require('../models/like');
 const Post = require('../models/post')
+const { encryptData } = require('../utils/encryption') // Import the encryption utility
+const { decryptData } =require('../utils/decryption')
+
 
 module.exports.addComment = async (req, res) => {
     try {
         const {postId} = req.params
         const userId = req.user.userId;
-        const { comment } = req.body
+        let { comment } = req.body
         console.log(comment);
         if (!comment) {
             return res.send({
@@ -22,20 +25,22 @@ module.exports.addComment = async (req, res) => {
                 msg: "Post Not Found"
             })
         }
+
+        const encryptedData = encryptData(comment);
         const createComment = new Comment({
-            comment,
-            user:userId,
+            comment: JSON.stringify(encryptedData),
+            user: userId,
             post:postId
+        });
 
-        })
-
+        
+        // console.log(createComment.comment);
         await createComment.save()
-        post.comments.push(createComment)
+        post.comments.push(createComment.comment)
         await post.save()
 
         res.send({
-            createComment,
-            post
+            createComment
         })
 
 
@@ -49,8 +54,9 @@ module.exports.showComment = async (req, res) => {
     const { postId } = req.params;
   
     try {
+        const findCommnets= await Comment.find({post:postId})
       const post = await Post.findById(postId).populate('comments');
-  
+        console.log(findCommnets);
       if (!post) {
         return res.send({
           success: false,
@@ -58,11 +64,18 @@ module.exports.showComment = async (req, res) => {
         });
       }
   
-      const allComments = post.comments;
+      
+      const decryptedComments = findCommnets.map(comment => {
+        console.log(comment);
+        const { iv, encryptedData } = JSON.parse(comment.comment);
+        const decryptedContent = decryptData(encryptedData, iv);
+        return { _id: comment._id, content: decryptedContent };
+    });
   
       res.send({
-        success: true,
-        comments: allComments,
+        decryptedComments,
+        
+
       });
     } catch (err) {
       console.error(err);
@@ -75,6 +88,10 @@ module.exports.updateComment=async(req,res)=>{
     const {commentId}=req.params
     const {newComment}=req.body
 
+    if(!newComment){
+        return res.send('required field missing')
+    }
+
     try{
 
         const updateComment=await Comment.findById(commentId)
@@ -85,13 +102,16 @@ module.exports.updateComment=async(req,res)=>{
             })
         }
 
-        updateComment.comment=newComment
+
+        const encryptedData = encryptData(newComment);
+        updateComment.comment = JSON.stringify(encryptedData)
+        // updateComment.comment=newComment
         await updateComment.save()
 
         return res.send({
             success: true,
             msg:'Comment updated successfully',
-            newComment:updateComment.comment
+            
         })
 
     }catch(err){
@@ -118,6 +138,7 @@ module.exports.deleteComment=async(req,res)=>{
 
     await Post.findByIdAndUpdate(postId,{$pull:{comments:commentId}})
     await Like.deleteMany({comment: commentId})
+    
 
     res.send({
         success: true,

@@ -7,7 +7,7 @@ module.exports.likePost = async (req, res) => {
     const { postId } = req.params
     const userId = req.user.userId;
     try {
-        
+
         const post = await Post.findById(postId);
         const checkLike = await Like.findOne({ user: userId, post: postId })
         if (checkLike) {
@@ -50,7 +50,7 @@ module.exports.likeComments=async(req,res)=>{
             await checkLike.deleteOne()
             await Comment.findByIdAndUpdate(commentId,{$pull:{like:checkLike.id}})
             return res.send({
-                status: 'Post Unliked',
+                status: 'Comment Unliked',
                 comment
             })
         }
@@ -63,7 +63,7 @@ module.exports.likeComments=async(req,res)=>{
 
         return res.send({
             success: true,
-            status: 'Post Liked',
+            status: 'Comment Liked',
             comment
         })
 

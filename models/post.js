@@ -15,8 +15,9 @@ const postSchema = new mongoose.Schema({
     // include the array of ids of all cmmt
     comments:[
         {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'comment'
+            // type: mongoose.Schema.Types.ObjectId,
+            // ref: 'comment'
+            type: Array,
         }
     ],
     like:[
