@@ -1,32 +1,36 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET='mykey'
+const JWT_SECRET = 'mykey';
 
-exports.isAuthenticatedUser=async(req,res,next)=>{
-    const {token} = req.cookies
-    // const token=req.headers.authorization
-    // console.log(token);
+exports.isAuthenticatedUser = async (req, res, next) => {
+  const { token } = req.cookies;
 
-    if(!token){
-        return res.status(401).json({ error: 'Unauthorized' });
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    // Verify the token
+    const decodedToken = jwt.verify(token, JWT_SECRET);
+
+    // Check if the token is valid
+    if (!decodedToken) {
+      return res.status(401).json({ error: 'Invalid token' });
     }
-    try {
-        // Verify the token
-        
-        const decodedToken = jwt.verify(token, JWT_SECRET);
-        
-        // Check if the token is valid
-        if (!decodedToken) {
-          return res.status(401).json({ error: 'Invalid token' });
-        }
-    
-        // Store the decoded token in the request object
-        req.user = decodedToken;
-    
-        // Proceed to the next middleware or route handler
-        next();
-      } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'An error occurred during authentication' });
-      }
-    
-}
+
+    // Store the decoded token in the request object
+    req.user = decodedToken;
+
+    // Proceed to the next middleware or route handler
+    next();
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      // Handle invalid signature error
+      return res.status(401).json({ error: 'Invalid token signature' });
+    }
+
+    console.error(error);
+    return res
+      .status(500)
+      .json({ error: 'An error occurred during authentication' });
+  }
+};

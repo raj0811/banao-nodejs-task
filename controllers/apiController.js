@@ -182,3 +182,15 @@ module.exports.chnagePassword = async (req,res) => {
         res.send(err)
     }
 }
+
+module.exports.logout = async (req, res) => {
+    try {
+      // Clear the token cookie
+      res.clearCookie('token');
+  
+      res.json({ msg: 'Logged out successfully' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'An error occurred during logout' });
+    }
+  };
